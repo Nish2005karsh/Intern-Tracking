@@ -2,10 +2,10 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Users, 
-  Clock, 
-  CheckCircle2, 
+import {
+  Users,
+  Clock,
+  CheckCircle2,
   Star,
   ThumbsUp,
   ThumbsDown,
@@ -19,39 +19,99 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
 } from "recharts";
-
-const studentProgressData = [
-  { week: "Week 1", student1: 30, student2: 35, student3: 32, student4: 28 },
-  { week: "Week 2", student1: 35, student2: 38, student3: 36, student4: 33 },
-  { week: "Week 3", student1: 40, student2: 42, student3: 38, student4: 36 },
-  { week: "Week 4", student1: 42, student2: 40, student3: 41, student4: 39 },
-];
-
-const pendingApprovals = [
-  { student: "John Doe", summary: "Developed REST API endpoints", date: "2025-01-15", hours: 8 },
-  { student: "Jane Smith", summary: "UI/UX design implementation", date: "2025-01-15", hours: 7 },
-  { student: "Mike Johnson", summary: "Database optimization tasks", date: "2025-01-14", hours: 6 },
-  { student: "Sarah Williams", summary: "Testing and bug fixes", date: "2025-01-14", hours: 8 },
-];
-
-const students = [
-  { name: "John Doe", course: "Computer Science", hours: 193, completion: 85, rating: 4.5 },
-  { name: "Jane Smith", course: "Information Technology", hours: 187, completion: 82, rating: 4.8 },
-  { name: "Mike Johnson", course: "Computer Science", hours: 175, completion: 78, rating: 4.2 },
-  { name: "Sarah Williams", course: "Software Engineering", hours: 201, completion: 90, rating: 4.9 },
-];
+import { useUser, useAuth } from "@clerk/clerk-react";
+import { useQuery } from "@tanstack/react-query";
+import { getMentorDashboardData } from "@/api/dashboardApi";
+import { Skeleton } from "@/components/ui/skeleton";
+import { PendingApprovals } from "@/components/mentor/PendingApprovals";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
+import { SearchBar } from "@/components/common/SearchBar";
+import { useState } from "react";
 
 const MentorDashboard = () => {
+  const { user, isLoaded: isUserLoaded } = useUser();
+  const { getToken, isLoaded: isAuthLoaded } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const { data: dashboardData, isLoading, error } = useQuery({
+    queryKey: ['mentorDashboard', user?.id],
+    queryFn: async () => {
+      const token = await getToken({ template: "supabase" });
+      if (!token || !user?.id) return null;
+      // Similar to StudentDashboard, we are passing Clerk ID.
+      // Ideally we should pass the profile ID (UUID).
+      // For now, assuming the API will handle Clerk ID or we update it later.
+      return getMentorDashboardData(token, user.id);
+    },
+    enabled: !!user && !!isUserLoaded && !!isAuthLoaded,
+  });
+
+  const mentorId = dashboardData?.data?.profile?.id;
+
+  // Subscribe to logs changes (new submissions)
+  useRealtimeSubscription({
+    table: 'logs',
+    queryKey: ['mentorDashboard'],
+    filter: mentorId ? `mentor_id=eq.${mentorId}` : undefined,
+  });
+
+  // Also subscribe to pending logs specifically if we want faster updates there, 
+  // but invalidating 'mentorDashboard' should cover it if it fetches everything.
+  // PendingApprovals component fetches 'pendingLogs' separately, so we should invalidate that too.
+  // We can add another subscription in PendingApprovals or just invalidate both here.
+  // Actually, let's add it in PendingApprovals for better encapsulation.
+
+  if (isLoading || !isUserLoaded || !isAuthLoaded) {
+    return (
+      <DashboardLayout title="Mentor Dashboard" role="mentor">
+        <div className="space-y-4">
+          <Skeleton className="h-32 w-full" />
+          <div className="grid grid-cols-2 gap-4">
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-64 w-full" />
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return <div>Error loading dashboard</div>;
+  }
+
+  const { profile, students, logs, reviews } = dashboardData?.data || {};
+
+  // Calculate stats
+  const activeMentees = students?.length || 0;
+  const pendingLogs = logs?.filter((l: any) => l.status === 'pending') || [];
+  const logsThisWeek = logs?.filter((l: any) => {
+    // Simple check for "this week" (last 7 days)
+    const logDate = new Date(l.date);
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    return logDate >= oneWeekAgo;
+  }).length || 0;
+
+  const avgRating = reviews?.length
+    ? (reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / reviews.length).toFixed(1)
+    : "N/A";
+
+  // Placeholder for chart data - would need real aggregation
+  const studentProgressData = [
+    { week: "Week 1", student1: 30, student2: 35 },
+    { week: "Week 2", student1: 35, student2: 38 },
+  ];
+
   return (
     <DashboardLayout title="Mentor Dashboard" role="mentor">
       {/* Metrics Cards */}
@@ -62,7 +122,7 @@ const MentorDashboard = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">4</div>
+            <div className="text-2xl font-bold text-primary">{activeMentees}</div>
             <p className="text-xs text-muted-foreground">Active mentees</p>
           </CardContent>
         </Card>
@@ -73,7 +133,7 @@ const MentorDashboard = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">4</div>
+            <div className="text-2xl font-bold text-primary">{pendingLogs.length}</div>
             <p className="text-xs text-muted-foreground">Logs awaiting review</p>
           </CardContent>
         </Card>
@@ -84,7 +144,7 @@ const MentorDashboard = () => {
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">4.6</div>
+            <div className="text-2xl font-bold text-primary">{avgRating}</div>
             <p className="text-xs text-muted-foreground">Out of 5.0</p>
           </CardContent>
         </Card>
@@ -95,8 +155,8 @@ const MentorDashboard = () => {
             <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">12</div>
-            <p className="text-xs text-muted-foreground">+3 from last week</p>
+            <div className="text-2xl font-bold text-primary">{logsThisWeek}</div>
+            <p className="text-xs text-muted-foreground">From last 7 days</p>
           </CardContent>
         </Card>
       </div>
@@ -115,10 +175,8 @@ const MentorDashboard = () => {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="student1" stroke="hsl(var(--chart-1))" name="John" />
-              <Line type="monotone" dataKey="student2" stroke="hsl(var(--chart-2))" name="Jane" />
-              <Line type="monotone" dataKey="student3" stroke="hsl(var(--chart-3))" name="Mike" />
-              <Line type="monotone" dataKey="student4" stroke="hsl(var(--chart-4))" name="Sarah" />
+              <Line type="monotone" dataKey="student1" stroke="hsl(var(--chart-1))" name="Student 1" />
+              <Line type="monotone" dataKey="student2" stroke="hsl(var(--chart-2))" name="Student 2" />
             </LineChart>
           </ResponsiveContainer>
         </CardContent>
@@ -126,47 +184,15 @@ const MentorDashboard = () => {
 
       {/* Pending Approvals */}
       <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Pending Approvals</CardTitle>
-          <CardDescription>Review and approve student log submissions</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Pending Approvals</CardTitle>
+            <CardDescription>Review and approve student log submissions</CardDescription>
+          </div>
+          <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search pending..." className="w-[250px]" />
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Student</TableHead>
-                <TableHead>Summary</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Hours</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pendingApprovals.map((log, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{log.student}</TableCell>
-                  <TableCell className="max-w-xs truncate">{log.summary}</TableCell>
-                  <TableCell>{log.date}</TableCell>
-                  <TableCell>{log.hours}h</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="default" className="gap-1">
-                        <ThumbsUp className="h-3 w-3" />
-                        Approve
-                      </Button>
-                      <Button size="sm" variant="outline" className="gap-1">
-                        <ThumbsDown className="h-3 w-3" />
-                        Reject
-                      </Button>
-                      <Button size="sm" variant="ghost">
-                        <MessageSquare className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <PendingApprovals searchQuery={searchQuery} />
         </CardContent>
       </Card>
 
@@ -182,28 +208,19 @@ const MentorDashboard = () => {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Course</TableHead>
-                <TableHead>Total Hours</TableHead>
-                <TableHead>Completion</TableHead>
-                <TableHead>Rating</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {students.map((student, index) => (
+              {students?.map((student: any, index: number) => (
                 <TableRow key={index}>
-                  <TableCell className="font-medium">{student.name}</TableCell>
+                  <TableCell className="font-medium">{student.profiles?.full_name}</TableCell>
                   <TableCell>{student.course}</TableCell>
-                  <TableCell>{student.hours}h</TableCell>
                   <TableCell>
-                    <Badge variant={student.completion >= 80 ? "default" : "secondary"}>
-                      {student.completion}%
+                    <Badge variant={student.status === 'active' ? "default" : "secondary"}>
+                      {student.status}
                     </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 fill-primary text-primary" />
-                      {student.rating}
-                    </div>
                   </TableCell>
                   <TableCell>
                     <Button size="sm" variant="outline">View Profile</Button>

@@ -1,41 +1,35 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GraduationCap } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { toast } from "sonner";
+import { SignIn, SignUp, useUser } from "@clerk/clerk-react";
+import { useEffect } from "react";
 
 const Auth = () => {
+  const { isSignedIn, user, isLoaded } = useUser();
   const navigate = useNavigate();
-  const [loginData, setLoginData] = useState({ email: "", password: "" });
-  const [signupData, setSignupData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    role: "student",
-  });
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success("Login successful!");
-    // Demo: redirect based on mock role
-    navigate("/student");
-  };
+  useEffect(() => {
+    if (isLoaded && isSignedIn && user) {
+      const role = user.publicMetadata.role as string;
+      if (role === 'student') {
+        navigate('/student');
+      } else if (role === 'mentor') {
+        navigate('/mentor');
+      } else if (role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
+    }
+  }, [isLoaded, isSignedIn, user, navigate]);
 
-  const handleSignup = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success("Account created successfully!");
-    // Redirect based on selected role
-    const roleRoutes = {
-      student: "/student",
-      mentor: "/mentor",
-      admin: "/admin",
-    };
-    navigate(roleRoutes[signupData.role as keyof typeof roleRoutes]);
-  };
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4 py-12">
@@ -46,106 +40,17 @@ const Auth = () => {
         </Link>
 
         <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="login">
-            <Card>
-              <CardHeader>
-                <CardTitle>Welcome Back</CardTitle>
-                <CardDescription>Enter your credentials to access your account</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      placeholder="your.email@example.com"
-                      value={loginData.email}
-                      onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      value={loginData.password}
-                      onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full">
-                    Login
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+          <TabsContent value="login" className="flex justify-center">
+            <SignIn forceRedirectUrl="/" />
           </TabsContent>
 
-          <TabsContent value="signup">
-            <Card>
-              <CardHeader>
-                <CardTitle>Create Account</CardTitle>
-                <CardDescription>Sign up to start tracking internships</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSignup} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full Name</Label>
-                    <Input
-                      id="signup-name"
-                      placeholder="John Doe"
-                      value={signupData.name}
-                      onChange={(e) => setSignupData({ ...signupData, name: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="your.email@example.com"
-                      value={signupData.email}
-                      onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      value={signupData.password}
-                      onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="role">Role</Label>
-                    <select
-                      id="role"
-                      className="w-full h-10 px-3 rounded-md border border-input bg-background"
-                      value={signupData.role}
-                      onChange={(e) => setSignupData({ ...signupData, role: e.target.value })}
-                    >
-                      <option value="student">Student</option>
-                      <option value="mentor">Mentor/Teacher</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  </div>
-                  <Button type="submit" className="w-full">
-                    Create Account
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+          <TabsContent value="signup" className="flex justify-center">
+            <SignUp forceRedirectUrl="/" />
           </TabsContent>
         </Tabs>
       </div>

@@ -2,10 +2,10 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Users, 
-  GraduationCap, 
-  Building2, 
+import {
+  Users,
+  GraduationCap,
+  Building2,
   CheckCircle2,
   UserPlus,
   Settings,
@@ -20,61 +20,83 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { 
-  PieChart, 
-  Pie, 
+import {
+  PieChart,
+  Pie,
   Cell,
   BarChart,
   Bar,
   LineChart,
   Line,
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer 
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
 } from "recharts";
-
-const companyData = [
-  { name: "Tech Corp", value: 12 },
-  { name: "Digital Solutions", value: 8 },
-  { name: "Innovation Labs", value: 6 },
-  { name: "Software Inc", value: 5 },
-  { name: "Others", value: 9 },
-];
-
-const departmentData = [
-  { dept: "Computer Science", students: 45 },
-  { dept: "IT", students: 38 },
-  { dept: "Software Eng", students: 32 },
-  { dept: "Data Science", students: 25 },
-];
-
-const weeklyActivityData = [
-  { week: "Week 1", submissions: 42, approvals: 38 },
-  { week: "Week 2", submissions: 48, approvals: 45 },
-  { week: "Week 3", submissions: 51, approvals: 47 },
-  { week: "Week 4", submissions: 55, approvals: 52 },
-];
+import { useUser, useAuth } from "@clerk/clerk-react";
+import { useQuery } from "@tanstack/react-query";
+import { getAdminDashboardData } from "@/api/dashboardApi";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AssignMentorModal } from "@/components/admin/AssignMentorModal";
+import { SearchBar } from "@/components/common/SearchBar";
+import { useState } from "react";
 
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
-const studentsList = [
-  { name: "John Doe", course: "CS", mentor: "Dr. Smith", status: "Active" },
-  { name: "Jane Smith", course: "IT", mentor: "Prof. Johnson", status: "Active" },
-  { name: "Mike Johnson", course: "CS", mentor: "Dr. Smith", status: "Active" },
-  { name: "Sarah Williams", course: "SE", mentor: "Dr. Brown", status: "Completed" },
-];
-
-const internshipsList = [
-  { company: "Tech Corp", student: "John Doe", duration: "Jan-Jun 2025", status: "Ongoing" },
-  { company: "Digital Solutions", student: "Jane Smith", duration: "Jan-Jun 2025", status: "Ongoing" },
-  { company: "Innovation Labs", student: "Mike Johnson", duration: "Dec-May 2025", status: "Ongoing" },
-  { company: "Software Inc", student: "Sarah Williams", duration: "Sep-Dec 2024", status: "Completed" },
-];
-
 const AdminDashboard = () => {
+  const { user, isLoaded: isUserLoaded } = useUser();
+  const { getToken, isLoaded: isAuthLoaded } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const { data: dashboardData, isLoading, error } = useQuery({
+    queryKey: ['adminDashboard'],
+    queryFn: async () => {
+      const token = await getToken({ template: "supabase" });
+      if (!token) return null;
+      return getAdminDashboardData(token);
+    },
+    enabled: !!user && !!isUserLoaded && !!isAuthLoaded,
+  });
+
+  if (isLoading || !isUserLoaded || !isAuthLoaded) {
+    return (
+      <DashboardLayout title="Admin Dashboard" role="admin">
+        <div className="space-y-4">
+          <Skeleton className="h-32 w-full" />
+          <div className="grid grid-cols-2 gap-4">
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-64 w-full" />
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return <div>Error loading dashboard</div>;
+  }
+
+  const { profiles, stats } = dashboardData?.data || {};
+
+  // Placeholder data for charts (since we only fetch counts and profiles)
+  // In a real app, we would fetch aggregated data for charts
+  const companyData = [
+    { name: "Tech Corp", value: 12 },
+    { name: "Digital Solutions", value: 8 },
+  ];
+
+  const departmentData = [
+    { dept: "Computer Science", students: 45 },
+    { dept: "IT", students: 38 },
+  ];
+
+  const weeklyActivityData = [
+    { week: "Week 1", submissions: 42, approvals: 38 },
+    { week: "Week 2", submissions: 48, approvals: 45 },
+  ];
+
   return (
     <DashboardLayout title="Admin Dashboard" role="admin">
       {/* KPI Cards */}
@@ -85,8 +107,8 @@ const AdminDashboard = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">140</div>
-            <p className="text-xs text-muted-foreground">+12 this month</p>
+            <div className="text-2xl font-bold text-primary">{stats?.totalStudents || 0}</div>
+            <p className="text-xs text-muted-foreground">Registered students</p>
           </CardContent>
         </Card>
 
@@ -96,7 +118,7 @@ const AdminDashboard = () => {
             <GraduationCap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">18</div>
+            <div className="text-2xl font-bold text-primary">{stats?.totalMentors || 0}</div>
             <p className="text-xs text-muted-foreground">Active faculty</p>
           </CardContent>
         </Card>
@@ -107,19 +129,19 @@ const AdminDashboard = () => {
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">127</div>
-            <p className="text-xs text-muted-foreground">13 pending approval</p>
+            <div className="text-2xl font-bold text-primary">{stats?.activeInternships || 0}</div>
+            <p className="text-xs text-muted-foreground">{stats?.totalInternships || 0} total internships</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <CardTitle className="text-sm font-medium">Pending Logs</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">45</div>
-            <p className="text-xs text-muted-foreground">This academic year</p>
+            <div className="text-2xl font-bold text-primary">{stats?.pendingLogs || 0}</div>
+            <p className="text-xs text-muted-foreground">Awaiting approval</p>
           </CardContent>
         </Card>
       </div>
@@ -155,9 +177,12 @@ const AdminDashboard = () => {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Department-wise Activity</CardTitle>
-            <CardDescription>Active students by department</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Student Management</CardTitle>
+              <CardDescription>Manage student assignments</CardDescription>
+            </div>
+            <AssignMentorModal />
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -195,21 +220,22 @@ const AdminDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Student Table */}
+      {/* User Table */}
       <Card className="mb-8">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Student Management</CardTitle>
-            <CardDescription>Manage all registered students</CardDescription>
+            <CardTitle>User Management</CardTitle>
+            <CardDescription>Manage all registered users</CardDescription>
           </div>
           <div className="flex gap-2">
+            <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search users..." className="w-[200px]" />
             <Button variant="outline" className="gap-2">
               <Download className="h-4 w-4" />
               Export
             </Button>
             <Button className="gap-2">
               <UserPlus className="h-4 w-4" />
-              Add Student
+              Add User
             </Button>
           </div>
         </CardHeader>
@@ -218,71 +244,28 @@ const AdminDashboard = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>Mentor</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Role</TableHead>
                 <TableHead>Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {studentsList.map((student, index) => (
+              {profiles?.filter((profile: any) =>
+                profile.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                profile.email?.toLowerCase().includes(searchQuery.toLowerCase())
+              ).map((profile: any, index: number) => (
                 <TableRow key={index}>
-                  <TableCell className="font-medium">{student.name}</TableCell>
-                  <TableCell>{student.course}</TableCell>
-                  <TableCell>{student.mentor}</TableCell>
+                  <TableCell className="font-medium">{profile.full_name}</TableCell>
+                  <TableCell>{profile.email}</TableCell>
                   <TableCell>
-                    <Badge variant={student.status === "Active" ? "default" : "secondary"}>
-                      {student.status}
+                    <Badge variant="outline">
+                      {profile.role}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <Button size="sm" variant="ghost">
                       <Eye className="h-4 w-4" />
                     </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Internship Table */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Internship Management</CardTitle>
-            <CardDescription>Monitor all internship programs</CardDescription>
-          </div>
-          <Button variant="outline" className="gap-2">
-            <Settings className="h-4 w-4" />
-            Settings
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Company</TableHead>
-                <TableHead>Student</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {internshipsList.map((internship, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{internship.company}</TableCell>
-                  <TableCell>{internship.student}</TableCell>
-                  <TableCell>{internship.duration}</TableCell>
-                  <TableCell>
-                    <Badge variant={internship.status === "Ongoing" ? "default" : "secondary"}>
-                      {internship.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button size="sm" variant="outline">View Details</Button>
                   </TableCell>
                 </TableRow>
               ))}

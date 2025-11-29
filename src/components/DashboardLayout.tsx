@@ -1,7 +1,9 @@
-import { Button } from "@/components/ui/button";
-import { GraduationCap, LogOut } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+
+import { GraduationCap } from "lucide-react";
+import { Link } from "react-router-dom";
 import { ReactNode } from "react";
+import { UserButton, useUser } from "@clerk/clerk-react";
+import { NotificationBell } from "./common/NotificationBell";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -10,11 +12,6 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout = ({ children, title, role }: DashboardLayoutProps) => {
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    navigate("/");
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -28,10 +25,10 @@ const DashboardLayout = ({ children, title, role }: DashboardLayoutProps) => {
             </div>
           </Link>
 
-          <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Button>
+          <div className="flex items-center gap-4">
+            <NotificationBell />
+            <UserButton afterSignOutUrl="/" />
+          </div>
         </div>
       </nav>
 
