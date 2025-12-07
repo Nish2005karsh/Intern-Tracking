@@ -35,10 +35,13 @@ export function AssignMentorModal() {
     const { data: students, isLoading: isLoadingStudents } = useQuery({
         queryKey: ['unassignedStudents'],
         queryFn: async () => {
+            console.log("Fetching unassigned students...");
             const token = await getToken({ template: "supabase" });
             if (!token) throw new Error("No token");
             const client = createAuthClient(token);
-            return getUnassignedStudents(client);
+            const data = await getUnassignedStudents(client);
+            console.log("Fetched unassigned students:", data);
+            return data;
         },
         enabled: isOpen,
     });
@@ -46,10 +49,13 @@ export function AssignMentorModal() {
     const { data: mentors, isLoading: isLoadingMentors } = useQuery({
         queryKey: ['allMentors'],
         queryFn: async () => {
+            console.log("Fetching mentors...");
             const token = await getToken({ template: "supabase" });
             if (!token) throw new Error("No token");
             const client = createAuthClient(token);
-            return getAllMentors(client);
+            const data = await getAllMentors(client);
+            console.log("Fetched mentors:", data);
+            return data;
         },
         enabled: isOpen,
     });

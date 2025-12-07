@@ -29,20 +29,30 @@ export const assignMentor = async (client: SupabaseClient, studentId: string, me
 };
 
 export const getUnassignedStudents = async (client: SupabaseClient) => {
+    console.log("API: getUnassignedStudents called");
     const { data, error } = await client
         .from('students')
         .select('*, profiles(full_name, email, avatar_url)')
         .is('mentor_id', null);
 
-    if (error) throw error;
+    if (error) {
+        console.error("API: getUnassignedStudents error", error);
+        throw error;
+    }
+    console.log("API: getUnassignedStudents success", data);
     return data;
 };
 
 export const getAllMentors = async (client: SupabaseClient) => {
+    console.log("API: getAllMentors called");
     const { data, error } = await client
         .from('mentors')
         .select('*, profiles(full_name, email, avatar_url)');
 
-    if (error) throw error;
+    if (error) {
+        console.error("API: getAllMentors error", error);
+        throw error;
+    }
+    console.log("API: getAllMentors success", data);
     return data;
 };

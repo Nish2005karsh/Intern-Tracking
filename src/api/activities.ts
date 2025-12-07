@@ -5,7 +5,8 @@ export interface Activity {
     activity_id: string;
     user_id: string;
     type: 'log_submission' | 'log_approval' | 'log_rejection' | 'document_upload' | 'mentor_assignment';
-    message: string;
+    description: string; // Mapped from DB 'description'
+    message?: string; // Alias for description for frontend compatibility
     is_read: boolean;
     created_at: string;
     related_id?: string;
@@ -21,7 +22,8 @@ export const getActivities = async (client: SupabaseClient, userId: string) => {
         .limit(20);
 
     if (error) throw error;
-    return data as Activity[];
+    if (error) throw error;
+    return data.map((a: any) => ({ ...a, message: a.description })) as Activity[];
 };
 
 export const markAsRead = async (client: SupabaseClient, activityId: string) => {
@@ -43,10 +45,15 @@ export const markAllAsRead = async (client: SupabaseClient, userId: string) => {
     if (error) throw error;
 };
 
-export const createActivity = async (client: SupabaseClient, activity: Omit<Activity, 'activity_id' | 'created_at' | 'is_read'>) => {
+export const createActivity = async (client: SupabaseClient, activity: { user_id: string, type: string, message: string, related_id?: string }) => {
     const { error } = await client
         .from('activities')
-        .insert([activity]);
+        .insert([{
+            user_id: activity.user_id,
+            activity_type: activity.type,
+            description: activity.message,
+            related_id: activity.related_id
+        }]);
 
     if (error) throw error;
 };

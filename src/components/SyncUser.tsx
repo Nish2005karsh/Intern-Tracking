@@ -11,7 +11,7 @@ const SyncUser = () => {
         const syncUser = async () => {
             if (!isLoaded || !user) return;
 
-            const { id: clerkId, primaryEmailAddress, fullName, publicMetadata } = user;
+            const { id: clerkId, primaryEmailAddress, fullName, imageUrl, publicMetadata } = user;
             const email = primaryEmailAddress?.emailAddress;
             const role = publicMetadata.role as Roles;
 
@@ -29,7 +29,7 @@ const SyncUser = () => {
                 // Check if profile exists
                 const { data: existingProfile, error: fetchError } = await authClient
                     .from('profiles')
-                    .select('id')
+                    .select('id, avatar_url')
                     .eq('clerk_id', clerkId)
                     .single();
 
@@ -49,6 +49,7 @@ const SyncUser = () => {
                                 clerk_id: clerkId,
                                 email,
                                 full_name: fullName,
+                                avatar_url: imageUrl,
                                 role,
                             },
                         ])
@@ -57,10 +58,16 @@ const SyncUser = () => {
 
                     if (insertError) {
                         console.error('Error creating profile:', insertError);
-                        console.error('Payload:', { clerk_id: clerkId, email, full_name: fullName, role });
+                        console.error('Payload:', { clerk_id: clerkId, email, full_name: fullName, avatar_url: imageUrl, role });
                         return;
                     }
                     profileId = newProfile.id;
+                } else if (existingProfile.avatar_url !== imageUrl) {
+                    // Update avatar if changed
+                    await authClient
+                        .from('profiles')
+                        .update({ avatar_url: imageUrl })
+                        .eq('id', profileId);
                 }
 
                 if (!profileId) return;
