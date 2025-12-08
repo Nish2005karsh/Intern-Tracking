@@ -198,3 +198,17 @@ VITE_SUPABASE_SERVICE_ROLE_KEY=
 
 💬 Chat feature between mentor & student
 
+📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+
+---
+
+If you want, I can also add:  
+✅ badges (Clerk, Supabase, React, TypeScript)  
+✅ deployment guide (Vercel + Supabase)  
+✅ screenshots section  
+✅ logo banner  
+
+Just tell me!
