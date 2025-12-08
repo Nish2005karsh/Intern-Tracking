@@ -61,3 +61,102 @@ This platform helps colleges, mentors, and students streamline the entire intern
 ---
 
 ## 📂 Project Structure
+```bash
+src/
+├── components/
+├── pages/
+├── hooks/
+├── context/
+├── lib/
+├── utils/
+├── services/ (API helpers)
+├── dashboard/
+│ ├── admin/
+│ ├── mentor/
+│ └── student/
+└── types/
+
+```
+---
+
+---
+
+## 🧑‍💼 User Roles
+
+### 👨‍🎓 **Student**
+- Upload internship letter.
+- View assigned mentor.
+- Submit progress updates.
+- Track internship status.
+
+### 🧑‍🏫 **Mentor**
+- View list of assigned students.
+- Approve/reject internship letters.
+- Track student progress.
+- Provide guidance/remarks.
+
+### 🧑‍💼 **Admin**
+- Manage all users.
+- Assign mentors to students.
+- Approve internship applications.
+- Access complete internship overview.
+
+---
+
+## 📊 Dashboard Features
+
+### **Student Panel**
+- Upload offer/approval letter.
+- View mentor details.
+- Weekly progress submit.
+- Internship status tracking.
+
+### **Mentor Panel**
+- List of assigned students.
+- View letter + approve/reject.
+- Track and comment on progress updates.
+
+### **Admin Panel**
+- Add/Manage users.
+- Assign mentors.
+- Approve internship requests.
+- View entire system analytics.
+
+---
+
+## 🗂️ Database Schema (Supabase)
+
+### `users`
+| Field         | Type      | Description                |
+|---------------|-----------|----------------------------|
+| id            | uuid      | Primary key                |
+| name          | text      | Full name                  |
+| email         | text      | Unique email               |
+| role          | text      | admin / mentor / student   |
+
+### `internships`
+| Field         | Type      | Description                     |
+|---------------|-----------|---------------------------------|
+| id            | uuid      | Primary key                     |
+| student_id    | uuid      | References users(id)            |
+| mentor_id     | uuid      | References users(id)            |
+| letter_url    | text      | Supabase storage file URL       |
+| status        | text      | pending / approved / rejected   |
+
+### `progress_updates`
+| Field         | Type      | Description                     |
+|---------------|-----------|---------------------------------|
+| id            | uuid      | Primary key                     |
+| internship_id | uuid      | References internships(id)      |
+| message       | text      | Weekly report / update          |
+| created_at    | timestamp | Auto-generated                  |
+
+---
+
+## ⚙️ Setup Instructions
+
+Clone the repository:
+
+```bash
+git clone https://github.com/your-username/intern-management-platform.git
+cd intern-management-platform
