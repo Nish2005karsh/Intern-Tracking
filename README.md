@@ -160,11 +160,12 @@ Clone the repository:
 ```bash
 git clone https://github.com/Nish2005karsh/intern-management-platform.git
 cd intern-management-platform
+```
 
 
 Install dependencies:
-```bash
 
+```bash
 cd intern-management-platform
 npm install
 ```
