@@ -177,7 +177,7 @@ npm run  dev
 
 ## Environment Variables (.env)
 Create a .env file and add:
-
+```bash
 VITE_CLERK_PUBLISHABLE_KEY=
 VITE_CLERK_SECRET_KEY=
 VITE_SUPABASE_URL=
