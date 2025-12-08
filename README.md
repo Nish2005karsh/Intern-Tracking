@@ -174,3 +174,16 @@ Run the development server:
 ```bash
 npm run  dev
 ```
+
+## Environment Variables (.env)
+Create a .env file and add:
+
+VITE_CLERK_PUBLISHABLE_KEY=
+VITE_CLERK_SECRET_KEY=
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+VITE_SUPABASE_SERVICE_ROLE_KEY=
+
+```
+
+
