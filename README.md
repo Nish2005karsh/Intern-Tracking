@@ -17,3 +17,31 @@ This platform helps colleges, mentors, and students streamline the entire intern
 - [License](#-license)
 
 ---
+## ✨ Features
+
+### 🔐 **Role-Based Authentication (Clerk)**
+- Secure login/signup using Clerk.
+- Automatic redirection based on user role:
+  - **Admin**
+  - **Mentor**
+  - **Student**
+
+### 📄 **Internship Letter Upload**
+- Students can upload internship approval/offer letters.
+- Files stored securely via **Supabase Storage**.
+- Admin + Mentor can view and verify uploads.
+
+### 🧑‍🏫 **Mentor Assignment**
+- Admin can assign mentors to each student.
+- Mentor receives real-time updates after assignment.
+
+### 📊 **Progress Tracking**
+- Mentors can track each student's internship journey.
+- Students can update their progress/weekly reports.
+- Admin has a complete overview.
+
+### 🖥️ **Beautiful UI**
+- Built using **ShadCN UI + Tailwind CSS**.
+- Clean, modern, responsive dashboard layout.
+
+---
