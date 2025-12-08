@@ -59,3 +59,5 @@ This platform helps colleges, mentors, and students streamline the entire intern
 - Supabase (Database + Storage)
 
 ---
+
+## 📂 Project Structure
