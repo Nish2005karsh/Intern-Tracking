@@ -186,4 +186,15 @@ VITE_SUPABASE_SERVICE_ROLE_KEY=
 
 ```
 
+🚀 Future Enhancements
+
+📱 Mobile App version (React Native)
+
+📈 Analytics dashboard for admin
+
+🔔 Email notifications (mentor assignment, approvals)
+
+📝 Student logs auto-analysis using AI
+
+💬 Chat feature between mentor & student
 
