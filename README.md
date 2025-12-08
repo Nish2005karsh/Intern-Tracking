@@ -45,3 +45,17 @@ This platform helps colleges, mentors, and students streamline the entire intern
 - Clean, modern, responsive dashboard layout.
 
 ---
+
+## 🧰 Tech Stack
+
+### **Frontend**
+- React (TypeScript)
+- Vite / Next.js (choose whichever you used)
+- ShadCN UI
+- Tailwind CSS
+
+### **Backend / Auth**
+- Clerk (Authentication + RBAC)
+- Supabase (Database + Storage)
+
+---
