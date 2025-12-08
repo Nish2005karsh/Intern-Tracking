@@ -158,5 +158,18 @@ src/
 Clone the repository:
 
 ```bash
-git clone https://github.com/your-username/intern-management-platform.git
+git clone https://github.com/Nish2005karsh/intern-management-platform.git
 cd intern-management-platform
+
+
+Install dependencies:
+```bash
+
+cd intern-management-platform
+npm install
+```
+
+Run the development server:
+```bash
+npm run  dev
+```
